@@ -10,7 +10,31 @@ if (!isset($_GET['id'])) {
 }
 
 $id = (int) $_GET['id'];
-$contact = Database::table('contacts')->find($id);
+
+$chars = range('A', 'Z');
+$chars[] = 'others';
+
+$contact = null;
+$tableFound = '';
+
+foreach ($chars as $ch) {
+    $tableName = 'contacts_' . $ch;
+
+    try {
+        $found = Database::table($tableName)->find($id);
+        if ($found) {
+            $contact = $found;
+            $tableFound = $tableName;
+            break;
+        }
+    } catch (Exception $e) {
+        // Bỏ qua nếu bảng chưa tồn tại hoặc lỗi
+    }
+}
+
+if (!$contact) {
+    die('Không tìm thấy liên hệ.');
+}
 ?>
 
 <!DOCTYPE html>

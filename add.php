@@ -1,3 +1,72 @@
+<?php
+require_once 'vendor/autoload.php';
+
+use Lazer\Classes\Database;
+use Lazer\Classes\Helpers\Validate;
+use Lazer\Classes\LazerException;
+
+define('LAZER_DATA_PATH', __DIR__ . '/data/');
+
+// Hàm xác định tên bảng từ tên liên hệ
+function getTableForName(string $name): string {
+    $firstChar = mb_substr(trim($name), 0, 1, 'UTF-8');
+    $firstChar = mb_strtoupper($firstChar, 'UTF-8');
+
+    if (!preg_match('/[A-Z]/', $firstChar)) {
+        return 'contacts_others';
+    }
+    return 'contacts_' . $firstChar;
+}
+
+// Tạo bảng nếu chưa có
+function ensureTableExists(string $table) {
+    try {
+        Validate::table($table)->exists();
+    } catch (LazerException $e) {
+        Database::create($table, [
+            'name' => 'string',
+            'email' => 'string',
+            'phone' => 'string'
+        ]);
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = trim($_POST['name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $phone = trim($_POST['phone'] ?? '');
+
+    if ($name && $email && $phone) {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            die("Email không hợp lệ.");
+        }
+
+        $table = getTableForName($name);
+        ensureTableExists($table);
+
+        try {
+            // Thêm dữ liệu bằng save()
+            $record = Database::table($table);
+            $record->name = $name;
+            $record->email = $email;
+            $record->phone = $phone;
+            $record->save();
+
+            header("Location: index.php");
+            exit;
+        } catch (Exception $e) {
+            die("Lỗi thêm liên hệ: " . $e->getMessage());
+        }
+    } else {
+        die("Vui lòng nhập đầy đủ thông tin.");
+    }
+}
+?>
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -65,7 +134,7 @@
 </head>
 <body>
     <h2>Thêm liên hệ</h2>
-    <form action="store.php" method="POST">
+    <form action="add.php" method="POST">
         <label>Họ tên:
             <input type="text" name="name" required />
         </label>

@@ -1,25 +1,37 @@
 <?php
-
 require_once 'vendor/autoload.php';
 
 use Lazer\Classes\Database;
 
 define('LAZER_DATA_PATH', __DIR__ . '/data/');
 
-try {
-    $contacts = Database::table('contacts')->findAll();
-} catch (Exception $e) {
-    die("Lỗi: " . $e->getMessage());
-}
+$chars = range('A', 'Z');
+$chars[] = 'others';
 
+$allContacts = [];
+
+foreach ($chars as $ch) {
+    $tableName = 'contacts_' . $ch;
+    try {
+        $contacts = Database::table($tableName)->findAll();
+        if ($contacts) {
+            foreach ($contacts as $contact) {
+                $allContacts[] = $contact;
+            }
+        }
+    } catch (Exception $e) {
+        // bảng chưa tồn tại hoặc lỗi, bỏ qua
+    }
+}
 ?>
+
 
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8" />
     <title>Quản lý danh bạ</title>
-     <link rel="icon" href="image.png" type="image/svg+xml" />
+    <link rel="icon" href="image.png" type="image/svg+xml" />
 
     <style>
         body {
@@ -89,16 +101,15 @@ try {
 <body>
     <div class="container">
         <h1>
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-book-half" viewBox="0 0 16 16" style="vertical-align: middle; margin-right: 8px;">
-    <path d="M8.5 2.687c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783"/>
-  </svg>
-  Quản lý danh bạ
-</h1>
-
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-book-half" viewBox="0 0 16 16" style="vertical-align: middle; margin-right: 8px;">
+                <path d="M8.5 2.687c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783"/>
+            </svg>
+            Quản lý danh bạ
+        </h1>
 
         <a class="add-btn" href="add.php">+ Thêm liên hệ mới</a>
 
-        <?php if (count($contacts) === 0): ?>
+        <?php if (count($allContacts) === 0): ?>
             <div class="no-data">Chưa có liên hệ nào trong danh bạ.</div>
         <?php else: ?>
             <table>
@@ -111,7 +122,7 @@ try {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($contacts as $contact): ?>
+                    <?php foreach ($allContacts as $contact): ?>
                         <tr>
                             <td><?= htmlspecialchars($contact->name) ?></td>
                             <td><?= htmlspecialchars($contact->email) ?></td>
